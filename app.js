@@ -330,6 +330,9 @@
   const cdThumb = $('.cd-thumb')
   const audio = $('#audio')
   const playBtn = $('.btn-toggle-play')
+  const progress = $('#progress')
+  const btnNext = $('.btn-next')
+  const btnPrev = $('.btn-prev')
 
 
 
@@ -339,6 +342,13 @@
     currentIndex : 0, // đặt cho index đầu tiên của list song là 0
     isPlaying : false,
     songs: [
+      {
+        name: "Phi Điểu và Ve Sầu",
+        singer: "Ngậm Nhiên",
+        path: "./assets/music/song3.mp3",
+        img: "./assets/img/song3.jpg"
+      },
+
       {
         name: "Can't take my eyes off you",
         singer: "Joseph Vincent",
@@ -353,13 +363,6 @@
         img: "./assets/img/song2.jpg"
       },
     
-      {
-        name: "Phi Điểu và Ve Sầu",
-        singer: "Ngậm Nhiên",
-        path: "./assets/music/song3.mp3",
-        img: "./assets/img/song3.jpg"
-      },
-
       {
         name: "Hoa nở không màu",
         singer: "Hoài Lâm",
@@ -425,19 +428,61 @@
         cd.style.width = newCdWidth > 0 ?  newCdWidth + 'px' : 0 // nếu newCdWidth < 0 thì cdWidth bằng 0(giải quyết vấn đề khi scroll quá nhanh, đĩa cd ko thu lại kịp)
         cd.style.opacity = newCdWidth / cdWidth
       }
+
+      // Xử lý CD quay | dừng
+
+      const cdThumbAnimate = cdThumb.animate([
+        {transform: 'rotate(360deg)'}
+      ],{
+        duration: 10000, // 10sec
+        iterations:Infinity
+      })
+      cdThumbAnimate.pause()
+
       // Xử lý khi click play
       playBtn.onclick = function(){
         if(_this.isPlaying){
-          _this.isPlaying = false
           audio.pause()
-          player.classList.remove('playing')
         }
         else{
-          _this.isPlaying = true
-          audio.play()
-          player.classList.add('playing')          
+          audio.play()        
         }
       
+      }
+
+      // khi song được play
+      audio.onplay = function(){
+        _this.isPlaying = true
+        player.classList.add('playing') 
+        cdThumbAnimate.play() 
+      }
+      // khi song bị pause play
+      audio.onpause= function(){
+        _this.isPlaying = false
+        player.classList.remove('playing')  
+        cdThumbAnimate.pause() 
+      }
+
+      // khi tua bài 
+      audio.ontimeupdate = function(){
+        if(audio.duration){
+        const progressPercent =  Math.floor(audio.currentTime / audio.duration * 100)
+        progress.value = progressPercent
+      }
+      }
+      progress.onchange =  function(e) {
+        const seekTime = audio.duration / 100 * e.target.value
+        audio.currentTime = seekTime
+      }
+      // bắt sự kiện next bài
+      btnNext.onclick = function() {
+        _this.nextSong()
+        audio.play()
+      }
+      // bắt sự kiện prev bài
+      btnPrev.onclick = function() {
+        _this.prevSong()
+        audio.play()
       }
     },
     // hiển thị bài hát hiện tại
@@ -448,6 +493,20 @@
       cdThumb.style.backgroundImage = `url('${this.currentSong.img}')`
       audio.src = this.currentSong.path
     
+    },
+    nextSong: function() {
+      this.currentIndex++
+      if(this.currentIndex >= this.songs.length){
+        this.currentIndex = 0
+      }
+      this.loadCurrentSong()
+    },
+    prevSong: function() {
+      this.currentIndex--
+      if(this.currentIndex < 0){
+        this.currentIndex = this.songs.length - 1
+      }
+      this.loadCurrentSong()
     },
   
     start: function() {
