@@ -333,6 +333,8 @@
   const progress = $('#progress')
   const btnNext = $('.btn-next')
   const btnPrev = $('.btn-prev')
+  const btnRepet = $('.btn-repeat')
+  const btnRandom = $('.btn-random')
 
 
 
@@ -341,6 +343,8 @@
   const app = {
     currentIndex : 0, // đặt cho index đầu tiên của list song là 0
     isPlaying : false,
+    isLoop:false,
+    isRandom : false,
     songs: [
       {
         name: "Phi Điểu và Ve Sầu",
@@ -390,9 +394,9 @@
     ],
     // hàm render ra danh sách bài hát
     render: function() {
-      const htmls = this.songs.map(song => {
+      const htmls = this.songs.map((song, index) => {
         return `
-          <div class="song">
+          <div class="song ${index === this.currentIndex ? 'active' : ''}">
             <div class="thumb" style="background-image: url('${song.img}')">
             </div>
             <div class="body">
@@ -476,14 +480,48 @@
       }
       // bắt sự kiện next bài
       btnNext.onclick = function() {
-        _this.nextSong()
+        if(_this.isRandom){
+          _this.playRandomSong()
+        }
+        else{
+          _this.nextSong()
+        }
+        
         audio.play()
+        _this.render()
       }
       // bắt sự kiện prev bài
       btnPrev.onclick = function() {
-        _this.prevSong()
+        if(_this.isRandom){
+          _this.playRandomSong()
+        }
+        else{
+          _this.prevSong()
+        }
         audio.play()
+        _this.render()
       }
+      // bắt sự kiện random bài
+      btnRandom.onclick = function() {
+        _this.isRandom = !_this.isRandom
+        btnRandom.classList.toggle('active',_this.isRandom)
+      }
+      // bắt sự kiện loop bài
+      btnRepet.onclick = function() {
+        _this.isLoop = !_this.isLoop  // set isLoop = ngược lại của chính nó,khi nó true,click thì thành false và ngược lại
+        btnRepet.classList.toggle('active',_this.isLoop)
+        
+      }
+      audio.onended = function () {
+        if(_this.isLoop){
+          audio.play()
+        }
+        else{
+          btnNext.click()
+        }
+      }
+      
+      
     },
     // hiển thị bài hát hiện tại
     loadCurrentSong: function () {
@@ -494,6 +532,7 @@
       audio.src = this.currentSong.path
     
     },
+    //  next song
     nextSong: function() {
       this.currentIndex++
       if(this.currentIndex >= this.songs.length){
@@ -501,6 +540,7 @@
       }
       this.loadCurrentSong()
     },
+    //  prev song
     prevSong: function() {
       this.currentIndex--
       if(this.currentIndex < 0){
@@ -508,6 +548,18 @@
       }
       this.loadCurrentSong()
     },
+  
+    // khi random song
+    playRandomSong: function() {
+      let newRadomIndex;
+      do {
+        newRadomIndex = Math.floor(Math.random() * this.songs.length);
+      } while (newRadomIndex === this.currentIndex);
+
+      this.currentIndex = newRadomIndex;
+      this.loadCurrentSong();
+    },
+   
   
     start: function() {
       // Định nghĩa các thuộc tính cho object
